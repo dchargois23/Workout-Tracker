@@ -1,6 +1,7 @@
 const express = require("express");
 const logger = require("morgan");
 const mongoose = require("mongoose");
+var path = require("path");
 
 const PORT = process.env.PORT || 3000;
 
@@ -15,57 +16,93 @@ app.use(express.json());
 
 app.use(express.static("public"));
 
-mongoose.connect(process.env.MONGODB_URI || "mongodb://localhost/populate", { useNewUrlParser: true });
+mongoose.connect(process.env.MONGODB_URI || "mongodb://localhost/workout", { useNewUrlParser: true });
 
-db.Library.create({ name: "Campus Library" })
-    .then(dbLibrary => {
-        console.log(dbLibrary);
-    })
-    .catch(({ message }) => {
-        console.log(message);
-    });
+// db.Workout.create({ name: "New Workout" })
+//     .then(dbLibrary => {
+//         console.log(dbLibrary);
+//     })
+//     .catch(({ message }) => {
+//         console.log(message);
+//     });
+app.get("/api/workouts", (req, res) => {
+    db.Workout.find({})
 
-app.post("/submit", ({ body }, res) => {
-    db.Book.create(body)
-        .then(({ _id }) => db.Library.findOneAndUpdate({}, { $push: { books: _id } }, { new: true }))
-        .then(dbLibrary => {
-            res.json(dbLibrary);
+        .then(results => {
+            res.json(results);
         })
-        .catch(err => {
-            res.json(err);
-        });
+
+
+
 });
 
-app.get("/books", (req, res) => {
-    db.Book.find({})
-        .then(dbBook => {
-            res.json(dbBook);
+
+
+app.put("/api/workouts/:id", (req, res) => {
+    var id = req.params.id
+
+    db.Workout.update(
+        { _id: id },
+        { $push: { exercises: req.body } }
+
+    )
+        .then(results => {
+            res.json(results);
         })
-        .catch(err => {
-            res.json(err);
-        });
+    // db.Workout.create(body)
+    //     .then(({ _id }) => db.Workout.findOneAndUpdate({}, { $push: { workouts: _id } }, { new: true }))
+    //     .then(dbLibrary => {
+    //         res.json(dbLibrary);
+    //     })
+    //     .catch(err => {
+    //         res.json(err);
+    //     });
 });
 
-app.get("/library", (req, res) => {
-    db.Library.find({})
-        .then(dbLibrary => {
-            res.json(dbLibrary);
-        })
-        .catch(err => {
-            res.json(err);
-        });
+
+app.get("/", function (req, res) {
+    res.sendFile(path.join(__dirname, "./public/index.html"));
 });
 
-app.get("/populated", (req, res) => {
-    db.Library.find({})
-        .populate("books")
-        .then(dbLibrary => {
-            res.json(dbLibrary);
-        })
-        .catch(err => {
-            res.json(err);
-        });
+app.get("/exercise", function (req, res) {
+    res.sendFile(path.join(__dirname, "./public/exercise.html"));
 });
+
+// If no matching route is found default to home
+app.get("stats", function (req, res) {
+    res.sendFile(path.join(__dirname, "./public/stats.html"));
+});
+;
+// app.get("/", (req, res) => {
+//     db.Book.find({})
+//         .then(dbBook => {
+//             res.json(dbBook);
+//         })
+//         .catch(err => {
+//             res.json(err);
+//         });
+// });
+
+// app.get("", (req, res) => {
+//     db.Library.find({})
+//         .then(dbLibrary => {
+//             res.json(dbLibrary);
+//         })
+//         .catch(err => {
+//             res.json(err);
+//         });
+// });
+
+// app.get("", (req, res) => {
+//     db.Library.find({})
+//         .populate("books")
+//         .then(dbLibrary => {
+//             res.json(dbLibrary);
+//         })
+//         .catch(err => {
+//             res.json(err);
+//         });
+// });
 
 app.listen(PORT, () => {
     console.log(`App running on port ${PORT}!`);
